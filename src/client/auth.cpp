@@ -34,7 +34,11 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <crypto_utils/android_pubkey.h>
-#include <openssl/base64.h>
+
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
@@ -82,11 +86,8 @@ static bool write_public_keyfile(RSA* private_key, const std::string& private_ke
         return false;
     }
 
-    size_t expected_length;
-    if (!EVP_EncodedLength(&expected_length, sizeof(binary_key_data))) {
-        LOG(ERROR) << "Public key too large to base64 encode";
-        return false;
-    }
+    size_t input_length = sizeof(binary_key_data);
+    size_t expected_length=((input_length+2)/3)*4;
 
     std::string content;
     content.resize(expected_length);
